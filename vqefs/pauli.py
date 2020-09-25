@@ -4,7 +4,7 @@
 
 import itertools
 
-from qutip import qeye, sigmax, sigmay, sigmaz, tensor
+from qutip import Qobj, qeye, sigmax, sigmay, sigmaz, tensor
 
 
 PAULI_MAP = {
@@ -64,3 +64,34 @@ def decompose(H, tol=1e-12):
         if abs(a) >= tol:
             coeffs["".join(indices)] = a
     return coeffs
+
+
+def pauli_measurement_gate(indices):
+    """ Return a Pauli measurement gate for the Pauli decomposition term
+        specified by the indices.
+
+        :param str indices:
+            A string representing the decomposition term. E.g.
+            "XY" represents σ_X * σ_Y, "ZZI" represents σ_Z * σ_Z * I, etc.
+
+        :return Qobj:
+            An operator that transforms the eigenstates of the given term
+            into the computational basis.
+    """
+    op = tensor(*[PAULI_MAP[idx] for idx in indices])
+    eigenvalues, eigenstates = op.eigenstates()
+    eigen_op = Qobj([ev.data.flatten() for ev in eigenstates])
+    return eigen_op.inv()
+
+
+def pauli_measurement_gates(n):
+    """ Return a complete set of Pauli measurement gates for the given
+        number of qubits.
+
+        Each gate rotates the eigenstates of the given Pauli decomposition
+        term into the computational basis.
+    """
+    gates = {}
+    for indices in itertools.product(*([PAULI_INDICES] * n)):
+        indices = "".join(indices)
+        gates[f"PM_{indices}"] = pauli_measurement_gate(indices)

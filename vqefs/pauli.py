@@ -17,7 +17,7 @@ PAULI_MAP = {
 PAULI_INDICES = list(PAULI_MAP.keys())
 
 
-def pauli_decompose(H):
+def decompose(H, tol=1e-12):
     """ Decompose the Hamiltonian H into tensor products of Pauli matrices.
 
         A Hamiltonian H may be decomposed into a sum of products of Pauli
@@ -38,6 +38,9 @@ def pauli_decompose(H):
 
         :parameter qobj H:
             The Hermitian operator to decompose.
+        :parameter float tol:
+            The threshold for determining whether a coefficient is zero and
+            should be omitted from the result. Default: 1e-12.
 
         :returns dict:
             A dictionary of the coefficients of the decomposition. The keys
@@ -45,7 +48,7 @@ def pauli_decompose(H):
             coefficients corresponding to those indices. E.g. `"XY": 5.0`
             says that `H = ... + 5.0 σ_X * σ_Y + ...`.
 
-            Coefficients that are zero are omitted from the dictionary.
+            Coefficients that are approximagely zero are omitted.
     """
     assert H.isherm, "Pauli decomposition requires H to be a Hermitian operator"
     dims = H.dims[0]
@@ -58,6 +61,6 @@ def pauli_decompose(H):
     for indices in itertools.product(*([PAULI_INDICES] * n)):
         op = tensor(*[PAULI_MAP[idx] for idx in indices])
         a = inv_d * (op * H).tr()
-        if a != 0.0:
+        if abs(a) >= tol:
             coeffs["".join(indices)] = a
     return coeffs

@@ -171,11 +171,13 @@ def measurement_circuit(indices):
             A circuit that will rotate the Pauli measurement into the
             computational basis.
 
-        Note: If the indices are "I" or "II" or "III..." this function will
-        return `None`. These terms have only a (repeated) +1 eigenvalue and
-        so cannot be measured in the same way as the other terms. Passing the
-        identity terms is supported here for convenience, but measurement
-        on these terms always returned the eigenvalue +1.
+        Note::
+
+            If the indices are "I" or "II" or "III..." this function will
+            return `None`. These terms have only a (repeated) +1 eigenvalue and
+            so cannot be measured in the same way as the other terms. Passing the
+            identity terms is supported here for convenience, but measurement
+            on these terms always returned the eigenvalue +1.
     """
     n = len(indices)
     assert n in PAULI_MEASUREMENT_CIRCUITS
@@ -187,7 +189,7 @@ def measurement_circuit(indices):
     return qc
 
 
-def xxx_pauli_measurement_gate(indices):
+def measurement_op(indices):
     """ Return a Pauli measurement gate for the Pauli decomposition term
         specified by the indices.
 
@@ -198,22 +200,14 @@ def xxx_pauli_measurement_gate(indices):
         :return Qobj:
             An operator that transforms the eigenstates of the given term
             into the computational basis.
+
+        Note::
+
+            This functionis mostly useful for testing -- the returned op cannot
+            usefully be used in a simulated quantum circuit without translation into
+            a sequence of gates the circuit processor supports.
     """
     op = tensor(*[PAULI_MAP[idx] for idx in indices])
     eigenvalues, eigenstates = op.eigenstates()
     eigen_op = Qobj([ev.data.flatten() for ev in eigenstates])
     return eigen_op.inv()
-
-
-def xxx_pauli_measurement_gates(n):
-    """ Return a complete set of Pauli measurement gates for the given
-        number of qubits.
-
-        Each gate rotates the eigenstates of the given Pauli decomposition
-        term into the computational basis.
-    """
-    gates = {}
-    for indices in itertools.product(*([PAULI_INDICES] * n)):
-        indices = "".join(indices)
-        gates[f"PM_{indices}"] = lambda: xxx_pauli_measurement_gate(indices)
-    return gates

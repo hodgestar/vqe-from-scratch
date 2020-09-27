@@ -1,7 +1,7 @@
 vqe-from-scratch
 ================
 
-An implementation VQE from scratch [*]_.
+An implementation of VQE from scratch [*]_.
 
 .. [*] For the moment "from scratch" is defined as "using only states, operators and circuits from qutip".
 

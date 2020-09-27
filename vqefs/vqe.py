@@ -2,7 +2,12 @@
 
 """ Variational Quantum Eigensolver. """
 
+import logging
+
 from qutip.qip.circuit import QubitCircuit
+
+
+logger = logging.getLogger(__name__)
 
 
 def _estimate_outcome_probabilities(qc, initial_state, runs):
@@ -44,13 +49,22 @@ def estimate_energy(
         qc.add_measurement("M", targets=[0], classical_store=0)
         if indices == "I" * N:
             energy_term = 1
-            # TODO: print(indices, coeff, energy_term, "SKIP")
+            logger.info(
+                "%s: coeff: %g, energy: %g", indices, coeff, energy_term,
+            )
         else:
             if analytical:
                 p0, p1 = _analytic_outcome_probabilities(qc, initial_state)
             else:
                 p0, p1 = _estimate_outcome_probabilities(qc, initial_state, runs=100)
             energy_term = sign * ((-1 * p0) + (+1 * p1))
-            # TODO: print(indices, coeff, energy_term, p0, p1)
+            logger.info(
+                "%s: coeff: %g, energy: %g, probabilities: (%g, %g)",
+                indices,
+                coeff,
+                energy_term,
+                p0,
+                p1,
+            )
         energy += coeff * energy_term
     return energy

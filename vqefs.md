@@ -309,7 +309,3 @@ h2d_ansatz(*result.x).run(initial_state)[0]
 ```python
 h2d.eigenstates()
 ```
-
-```python
-
-```

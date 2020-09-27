@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-""" Decompose a Hamiltonian into tensor products of Pauli matrices. """
+""" Utilities for working with Pauli decompositions. """
 
 import itertools
+import math
 
 from qutip import Qobj, qeye, sigmax, sigmay, sigmaz, tensor
+from qutip.qip.circuit import QubitCircuit
 
 
 PAULI_MAP = {
@@ -66,7 +68,69 @@ def decompose(H, tol=1e-12):
     return coeffs
 
 
-def pauli_measurement_gate(indices):
+def compose(coeffs):
+    """ Sum Pauli decomposition into an operator.
+
+        :parameter dict coeffs:
+            The Pauli decompostion coefficients dictionary as returned by
+            `vqefs.pauli.decompose(...)`.
+
+        :returns qobj:
+            The Hermitian operator that is the sum of the Pauli decomposition
+            terms.
+    """
+    H = 0
+    for indices, coeff in coeffs.items():
+        H += coeff * tensor(*[PAULI_MAP[idx] for idx in indices])
+    return H
+
+
+PAULI_MEASUREMENT_CIRCUITS_1Q = {
+    "I": [],
+    "Z": [],
+    "X": [("SNOT", {"targets": 0})],
+    "Y": [
+        ("PHASEGATE", {"targets": 0, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 0}),
+    ],
+}
+
+PAULI_MEASUREMENT_CIRCUITS_2Q = {
+    "II": [],
+    "ZZ": [("CNOT", {"controls": 1, "targets": 0})],
+    "XX": [
+        ("SNOT", {"targets": 0}),
+        ("SNOT", {"targets": 1}),
+        ("CNOT", {"controls": 1, "targets": 0}),
+    ],
+    "YY": [
+        ("PHASEGATE", {"targets": 0, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 0}),
+        ("PHASEGATE", {"targets": 1, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 1}),
+        ("CNOT", {"controls": 1, "targets": 0}),
+    ],
+    # TODO: Add measurement circuits for remaining terms
+}
+
+PAULI_MEASUREMENT_CIRCUITS = {
+    1: PAULI_MEASUREMENT_CIRCUITS_1Q,
+    2: PAULI_MEASUREMENT_CIRCUITS_2Q,
+}
+
+
+def measurement_circuit(indices):
+    """ Return a measurement circuit for the given Pauli decomposition term.
+    """
+    n = len(indices)
+    assert n in PAULI_MEASUREMENT_CIRCUITS
+    qc = QubitCircuit(N=n)
+    for gate, kwargs in PAULI_MEASUREMENT_CIRCUITS[n][indices]:
+        qc.add_gate(gate, **kwargs)
+    return qc
+
+
+def xxx_pauli_measurement_gate(indices):
     """ Return a Pauli measurement gate for the Pauli decomposition term
         specified by the indices.
 
@@ -84,7 +148,7 @@ def pauli_measurement_gate(indices):
     return eigen_op.inv()
 
 
-def pauli_measurement_gates(n):
+def xxx_pauli_measurement_gates(n):
     """ Return a complete set of Pauli measurement gates for the given
         number of qubits.
 
@@ -94,4 +158,5 @@ def pauli_measurement_gates(n):
     gates = {}
     for indices in itertools.product(*([PAULI_INDICES] * n)):
         indices = "".join(indices)
-        gates[f"PM_{indices}"] = pauli_measurement_gate(indices)
+        gates[f"PM_{indices}"] = lambda: xxx_pauli_measurement_gate(indices)
+    return gates

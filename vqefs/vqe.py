@@ -43,16 +43,16 @@ def estimate_energy(
     N = len(initial_state.dims[0])  # number of qubits
     sign = (N == 1) and 1 or -1
     for indices, coeff in h_coeffs.items():
-        qc = QubitCircuit(N=N, num_cbits=1)
-        qc.add_circuit(ansatz_circuit)
-        qc.add_circuit(h_measurement_circuits[indices])
-        qc.add_measurement("M", targets=[0], classical_store=0)
         if indices == "I" * N:
             energy_term = 1
             logger.info(
                 "%s: coeff: %g, energy: %g", indices, coeff, energy_term,
             )
         else:
+            qc = QubitCircuit(N=N, num_cbits=1)
+            qc.add_circuit(ansatz_circuit)
+            qc.add_circuit(h_measurement_circuits[indices])
+            qc.add_measurement("M", targets=[0], classical_store=0)
             if analytical:
                 p0, p1 = _analytic_outcome_probabilities(qc, initial_state)
             else:

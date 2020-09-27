@@ -86,7 +86,8 @@ def compose(coeffs):
 
 
 PAULI_MEASUREMENT_CIRCUITS_1Q = {
-    "I": [],
+    # There is no measurement circuit for "I" because it has only a single
+    # eigenstate (+1).
     "Z": [],
     "X": [("SNOT", {"targets": 0})],
     "Y": [
@@ -96,8 +97,10 @@ PAULI_MEASUREMENT_CIRCUITS_1Q = {
 }
 
 PAULI_MEASUREMENT_CIRCUITS_2Q = {
-    "II": [],
+    # There is no measurement circuit for "II" because it has only a single
+    # eigenstate (+1).
     "ZZ": [("CNOT", {"controls": 1, "targets": 0})],
+    "ZI": [],
     "XX": [
         ("SNOT", {"targets": 0}),
         ("SNOT", {"targets": 1}),
@@ -121,9 +124,26 @@ PAULI_MEASUREMENT_CIRCUITS = {
 
 def measurement_circuit(indices):
     """ Return a measurement circuit for the given Pauli decomposition term.
+
+        :param str indices:
+            The Pauli terms to return a measurement circuit for. The
+            returned circuit rotates the +1 and -1 eigenspaces of the
+            Pauli term into the computational basis.
+
+        :return QubitCircuit:
+            A circuit that will rotate the Pauli measurement into the
+            computational basis.
+
+        Note: If the indices are "I" or "II" or "III..." this function will
+        return `None`. These terms have only a (repeated) +1 eigenvalue and
+        so cannot be measured in the same way as the other terms. Passing the
+        identity terms is supported here for convenience, but measurement
+        on these terms always returned the eigenvalue +1.
     """
     n = len(indices)
     assert n in PAULI_MEASUREMENT_CIRCUITS
+    if indices == "I" * n:
+        return None
     qc = QubitCircuit(N=n)
     for gate, kwargs in PAULI_MEASUREMENT_CIRCUITS[n][indices]:
         qc.add_gate(gate, **kwargs)

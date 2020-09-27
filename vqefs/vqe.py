@@ -10,7 +10,7 @@ from qutip.qip.circuit import QubitCircuit
 logger = logging.getLogger(__name__)
 
 
-def _estimate_outcome_probabilities(qc, initial_state, runs):
+def _estimate_outcome_probabilities(qc, initial_state, shots):
     """ Run a circuit a number of times and estimate the probabilities of
         each outcome.
 
@@ -19,7 +19,7 @@ def _estimate_outcome_probabilities(qc, initial_state, runs):
             measurement and store its result in `.cbits[0]`.
         :param Qobj initial_state:
             The initial state to run the circuit on.
-        :param int runs:
+        :param int shots:
             The number of runs to perform.
 
         :return list:
@@ -27,11 +27,11 @@ def _estimate_outcome_probabilities(qc, initial_state, runs):
             0 and 1.
     """
     outcome_counts = [0, 0]
-    for _ in range(runs):
+    for _ in range(shots):
         qc.run(state=initial_state)
         result = qc.cbits[0]
         outcome_counts[result] += 1
-    return [outcome_counts[0] / runs, outcome_counts[1] / runs]
+    return [outcome_counts[0] / shots, outcome_counts[1] / shots]
 
 
 def _analytic_outcome_probabilities(qc, initial_state):
@@ -107,7 +107,7 @@ def estimate_energy(
             if analytical:
                 p0, p1 = _analytic_outcome_probabilities(qc, initial_state)
             else:
-                p0, p1 = _estimate_outcome_probabilities(qc, initial_state, runs=100)
+                p0, p1 = _estimate_outcome_probabilities(qc, initial_state, shots=shots)
             energy_term = sign * ((-1 * p0) + (+1 * p1))
             logger.info(
                 "%s: coeff: %g, energy: %g, probabilities: (%g, %g)",

@@ -95,16 +95,42 @@ PAULI_MEASUREMENT_CIRCUITS_1Q = {
         ("SNOT", {"targets": 0}),
     ],
 }
+assert len(PAULI_MEASUREMENT_CIRCUITS_1Q) == 3
 
 PAULI_MEASUREMENT_CIRCUITS_2Q = {
     # There is no measurement circuit for "II" because it has only a single
     # eigenstate (+1).
-    "ZZ": [("CNOT", {"controls": 1, "targets": 0})],
+    "IZ": [("SWAP", {"targets": [0, 1]})],
+    "IX": [("SWAP", {"targets": [0, 1]}), ("SNOT", {"targets": 0})],
+    "IY": [
+        ("SWAP", {"targets": [0, 1]}),
+        ("PHASEGATE", {"targets": 0, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 0}),
+    ],
     "ZI": [],
+    "ZZ": [("CNOT", {"controls": 1, "targets": 0})],
+    "ZX": [("SNOT", {"targets": 1}), ("CNOT", {"controls": 1, "targets": 0})],
+    "ZY": [
+        ("PHASEGATE", {"targets": 1, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 1}),
+        ("CNOT", {"controls": 1, "targets": 0}),
+    ],
+    "XI": [("SNOT", {"targets": 0})],
     "XX": [
         ("SNOT", {"targets": 0}),
         ("SNOT", {"targets": 1}),
         ("CNOT", {"controls": 1, "targets": 0}),
+    ],
+    "XZ": [("SNOT", {"targets": 0}), ("CNOT", {"controls": 1, "targets": 0})],
+    "XY": [
+        ("PHASEGATE", {"targets": 1, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 1}),
+        ("SNOT", {"targets": 0}),
+        ("CNOT", {"controls": 1, "targets": 0}),
+    ],
+    "YI": [
+        ("PHASEGATE", {"targets": 0, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 0}),
     ],
     "YY": [
         ("PHASEGATE", {"targets": 0, "arg_value": -math.pi / 2}),
@@ -113,8 +139,19 @@ PAULI_MEASUREMENT_CIRCUITS_2Q = {
         ("SNOT", {"targets": 1}),
         ("CNOT", {"controls": 1, "targets": 0}),
     ],
-    # TODO: Add measurement circuits for remaining terms
+    "YZ": [
+        ("PHASEGATE", {"targets": 0, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 0}),
+        ("CNOT", {"controls": 1, "targets": 0}),
+    ],
+    "YX": [
+        ("SNOT", {"targets": 1}),
+        ("PHASEGATE", {"targets": 0, "arg_value": -math.pi / 2}),
+        ("SNOT", {"targets": 0}),
+        ("CNOT", {"controls": 1, "targets": 0}),
+    ],
 }
+assert len(PAULI_MEASUREMENT_CIRCUITS_2Q) == 15
 
 PAULI_MEASUREMENT_CIRCUITS = {
     1: PAULI_MEASUREMENT_CIRCUITS_1Q,

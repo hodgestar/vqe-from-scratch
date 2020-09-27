@@ -3,7 +3,7 @@ vqe-from-scratch
 
 An implementation of VQE from scratch [*]_.
 
-.. [*] For the moment "from scratch" is defined as "using only states, operators and circuits from qutip".
+.. [*] Here "from scratch" is defined as "using only states, operators and circuits from QuTiP".
 
 Notebook with solution to Screening Task 4
 ------------------------------------------

@@ -23,6 +23,24 @@ Library features and limitations:
 * Can only build Pauli measurement operators for one and two qubit operators (needs extending to support arbitrary
   size operators).
 
+
+## Contents:
+
+<ol>
+    <li><a href="#screening-task-4">Screening Task 4</a>
+        <ol style="list-style-type: decimal;">
+            <li><a href="#define-h">Define H</a></li>
+            <li><a href="#decompose-h">Decompose H into a sum of Pauli matrix tensor products</a></li>
+            <li><a href="#construct-measurements">Construct measurement circuits for each Pauli term</a></li>
+            <li><a href="#define-ansatz">Define the ansatz</a></li>
+            <li><a href="#estimate-energy">Estimate the minimum energy</a></li>
+            <li><a href="#compare-energy">Compare with the analytical result</a></li>
+        </ol>
+    </li>
+    <li><a href="#one-qubit-test">One qubit example for testing</a></li>
+    <li><a href="#two-qubit-test">Two qubit example for testing</a></li>
+</ol>
+
 ```python
 import logging
 
@@ -47,7 +65,12 @@ import vqefs.vqe
 warnings.filterwarnings("ignore", message=r"`should_run_async`")
 ```
 
-# Define H
+# 1. Screening Task 4 <a class="anchor" id="screening-task-4"></a>
+
+<hr/>
+
+
+## 1.1. Define H <a class="anchor" id="define-h"></a>
 
 ```python
 H = qutip.Qobj([
@@ -59,7 +82,7 @@ H = qutip.Qobj([
 H
 ```
 
-# Decompose H into a sum of Pauli matrix tensor products
+## 1.2. Decompose H into a sum of Pauli matrix tensor products <a class="anchor" id="decompose-h"></a>
 
 * The function vqefs.pauli.decompose(...) returns the coefficients of each term.
 * Terms with zero coefficients are excluded.
@@ -70,7 +93,7 @@ h_coeffs = vqefs.pauli.decompose(H)
 h_coeffs
 ```
 
-# Construct measurement circuits for each Pauli term
+## 1.3. Construct measurement circuits for each Pauli term <a class="anchor" id="construct-measurements"></a>
 
 * And display each measurement circuit so that we can inspect them for correctness. :)
 
@@ -81,7 +104,7 @@ h_measurement_circuits = {
 ```
 
 ```python
-h_measurement_circuits["II"]
+assert h_measurement_circuits["II"] is None
 ```
 
 ```python
@@ -96,7 +119,7 @@ h_measurement_circuits["XX"]
 h_measurement_circuits["YY"]
 ```
 
-# Define the form of the states to optimize over (i.e. the ansatz)
+## 1.4. Define the form of the states to optimize over (i.e. the ansatz) <a class="anchor" id="define-ansatz"></a>
 
 * And display an example of the circuit to check that it looks correct. :)
 
@@ -122,7 +145,7 @@ initial_state = qutip.ket("00")
 initial_state
 ```
 
-# Estimate the minimum energy
+## 1.5. Estimate the minimum energy <a class="anchor" id="estimate-energy"></a>
 
 ```python
 # set to analytical=True to use exact outcome probabilitites, set to False to simulate outcomes
@@ -134,7 +157,7 @@ def h_energy(x):
     energy = vqefs.vqe.estimate_energy(
         h_coeffs, h_measurement_circuits,
         initial_state, ansatz_circuit,
-        runs=200, analytical=analytical
+        shots=200, analytical=analytical
     )
     return energy
 
@@ -157,13 +180,15 @@ state, _prob = h_ansatz(result.x[0]).run(initial_state)
 state
 ```
 
-# Compare with the analytical result
+## 1.6. Compare with the analytical result <a class="anchor" id="compare-energy"></a>
 
 ```python
 H.eigenstates()
 ```
 
-# One qubit example for testing
+# 2. One qubit example for testing <a class="anchor" id="one-qubit-test"></a>
+
+<hr/>
 
 * Test a simple single qubit example to sanity check the algorithm.
 
@@ -181,6 +206,22 @@ h1d
 h1d_measurement_circuits = {
     indices: vqefs.pauli.measurement_circuit(indices) for indices in h1d_coeffs
 }
+```
+
+```python
+assert h1d_measurement_circuits["I"] is None
+```
+
+```python
+h1d_measurement_circuits["X"]
+```
+
+```python
+h1d_measurement_circuits["Y"]
+```
+
+```python
+# h1d_measurement_circuits["Z"] is the empty circuit
 ```
 
 ```python
@@ -208,7 +249,7 @@ def h1d_energy(x):
     energy = vqefs.vqe.estimate_energy(
         h1d_coeffs, h1d_measurement_circuits,
         initial_state, ansatz_circuit,
-        runs=200, analytical=analytical
+        shots=200, analytical=analytical
     )
     return energy
 
@@ -234,7 +275,9 @@ h1d_ansatz(*result.x).run(initial_state)[0]
 h1d.eigenstates()
 ```
 
-# Two qubit example for testing
+# 3. Two qubit example for testing <a class="anchor" id="two-qubit-test"></a>
+
+<hr/>
 
 * Test a simple two qubit example to sanity check the algorithm.
 
@@ -284,7 +327,7 @@ def h2d_energy(x):
     energy = vqefs.vqe.estimate_energy(
         h2d_coeffs, h2d_measurement_circuits,
         initial_state, ansatz_circuit,
-        runs=200, analytical=analytical
+        shots=200, analytical=analytical
     )
     return energy
 

@@ -34,13 +34,14 @@ Implement a simple VQE library from scracth using QuTiP Qobjs and QubitCircuits 
 * It would be nice to run the circuit on a QuTiP Processor instead (i.e. a simulator for a real quantum device)
   but this requires adding support for circuits with measurement to the Processors (likely not too hard, but
   not done yet).
+* Implement calculation of Pauli measurement gates for 3+ qubits.
 * Extend the extensive unit tests to the rest of the library.
   
 **Note**:
 
 * This notebook requires the QuTiP master branch for QubitCircuit measurement support. Once QuTiP 4.6 is released
   it should be possilbe to run in on QuTiP 4.6.
-* Full disclosure -- I implemented some of the intial parts of QuTiP's measurement support.
+* Full disclosure -- I implemented some of the initial parts of QuTiP's measurement support.
 
 **References**:
 

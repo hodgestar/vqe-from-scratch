@@ -15,13 +15,38 @@ jupyter:
 
 # Variational Quantum Eigensolver from Scratch
 
-Implement a simple VQE library from scracth using QuTiP Qobjs and circuits and then use it to approximate the lowest eigenstate of a two qubit Hamiltonian (H) defined below.
+Implement a simple VQE library from scracth using QuTiP Qobjs and QubitCircuits and then use it to approximate the lowest eigenstate of a two qubit Hamiltonian (H) defined below.
 
-Library features and limitations:
+**Library features**:
 
-* Can decompose arbitrary Hamiltonians into Pauli operators (system resources allowing).
-* Can only build Pauli measurement operators for one and two qubit operators (needs extending to support arbitrary
+* Can decompose Hamiltonians into Pauli operators.
+* Can re-compose Pauli decompositions into Hamiltonians. 
+* Can build Pauli measurement operators for one and two qubit operators (needs extending to support arbitrary
   size operators).
+* Can estimate the energy of a state for a given (decomposed) Hamiltonian either by:
+
+  * simulation (mutiple calls to `QubitCircuit.run`)
+  * analytically (a single call to `QubitCircuit.run_statistics`).
+* Extensive unit tests for `vqefs.pauli.decompose` using [hypothesis](https://hypothesis.readthedocs.io/).
+  
+**Future work**:
+
+* It would be nice to run the circuit on a QuTiP Processor instead (i.e. a simulator for a real quantum device)
+  but this requires adding support for circuits with measurement to the Processors (likely not too hard, but
+  not done yet).
+* Extend the extensive unit tests to the rest of the library.
+  
+**Note**:
+
+* This notebook requires the QuTiP master branch for QubitCircuit measurement support. Once QuTiP 4.6 is released
+  it should be possilbe to run in on QuTiP 4.6.
+* Full disclosure -- I implemented some of the intial parts of QuTiP's measurement support.
+
+**References**:
+
+* [A variational eigenvalue solver on a quantum processor](https://arxiv.org/pdf/1304.3061.pdf>)
+* [Microsoft Quantum, Pauli Measurements](https://docs.microsoft.com/en-us/quantum/concepts/pauli-measurements>)
+
 
 
 ## Contents:
@@ -68,6 +93,8 @@ warnings.filterwarnings("ignore", message=r"`should_run_async`")
 # 1. Screening Task 4 <a class="anchor" id="screening-task-4"></a>
 
 <hr/>
+
+Find the lowest eigenvalue of the matix H (defined below) using VQE-like circuits, created by yourself from scratch.
 
 
 ## 1.1. Define H <a class="anchor" id="define-h"></a>
@@ -119,45 +146,53 @@ h_measurement_circuits["XX"]
 h_measurement_circuits["YY"]
 ```
 
-## 1.4. Define the form of the states to optimize over (i.e. the ansatz) <a class="anchor" id="define-ansatz"></a>
+## 1.4. Define the ansatz <a class="anchor" id="define-ansatz"></a>
 
-* And display an example of the circuit to check that it looks correct. :)
+* And display an example of the ansatz circuit to check that it looks correct. :)
+* And display the initial state that will be the input to the ansatz circuit.
 
 ```python
 def h_ansatz(theta):
+    """ Apply H_0, CNOT_10 and RX_0(theta). """
     qc = QubitCircuit(N=2)
-
     qc.add_gate("SNOT", targets=0)
     qc.add_gate("CNOT", controls=0, targets=1)
     qc.add_gate("RX", targets=0, arg_value=theta)
-
-    #qc.add_gate("RX", targets=0, arg_value=theta)
-    #qc.add_gate("CNOT", controls=0, targets=1)
-    #qc.add_gate("SNOT", targets=0)
-    
     return qc
     
 h_ansatz(math.pi / 2)
 ```
 
 ```python
-initial_state = qutip.ket("00")
-initial_state
+h_initial_state = qutip.ket("00")
+h_initial_state
 ```
 
 ## 1.5. Estimate the minimum energy <a class="anchor" id="estimate-energy"></a>
 
+* Estimate the minimum energy using scipy.optimize's implementation of [BFGS](https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm) for bounded problems.
+* We define a function `h_energy` to optimize.
+
+  * This function calls `vqefs.vqe.estimate(..)` with the ansatz circuit and the decomposed Hamiltonian, H.
+* One can switch between analytical energy estimation and multiple shots by setting `analytical` to True or False.
+* One can adjust the number of shots (per Pauli decomposition term) by setting `shots`. More shots gives better
+  results but is much slower.
+
 ```python
 # set to analytical=True to use exact outcome probabilitites, set to False to simulate outcomes
 analytical = True
+shots = 1000
 
 def h_energy(x):
+    """ The energy to minimise. The parameter x is passed by scipy.optimize and is a tuple
+        containing just the angle theta.
+    """
     theta, = x
     ansatz_circuit = h_ansatz(theta)
     energy = vqefs.vqe.estimate_energy(
         h_coeffs, h_measurement_circuits,
-        initial_state, ansatz_circuit,
-        shots=200, analytical=analytical
+        h_initial_state, ansatz_circuit,
+        shots=shots, analytical=analytical
     )
     return energy
 
@@ -176,7 +211,7 @@ print(f"best theta: {result.x}")
 
 ```python
 # display final state
-state, _prob = h_ansatz(result.x[0]).run(initial_state)
+state, _prob = h_ansatz(result.x[0]).run(h_initial_state)
 state
 ```
 
@@ -190,7 +225,8 @@ H.eigenstates()
 
 <hr/>
 
-* Test a simple single qubit example to sanity check the algorithm.
+* Test a simple single qubit example to sanity check the procedure we're using.
+* Changing the Pauli coefficients can be useful when debugging.
 
 ```python
 h1d_coeffs = {"I": 1, "X": 2, "Y": 3, "Z": 4}
@@ -235,8 +271,8 @@ h1d_ansatz(math.pi / 2, math.pi / 2)
 ```
 
 ```python
-initial_state = qutip.ket("0")
-initial_state
+h1d_initial_state = qutip.ket("0")
+h1d_initial_state
 ```
 
 ```python
@@ -248,7 +284,7 @@ def h1d_energy(x):
     ansatz_circuit = h1d_ansatz(theta1, theta2)
     energy = vqefs.vqe.estimate_energy(
         h1d_coeffs, h1d_measurement_circuits,
-        initial_state, ansatz_circuit,
+        h1d_initial_state, ansatz_circuit,
         shots=200, analytical=analytical
     )
     return energy
@@ -268,7 +304,7 @@ print(f"best theta: {result.x}")
 
 ```python
 # display final state
-h1d_ansatz(*result.x).run(initial_state)[0]
+h1d_ansatz(*result.x).run(h1d_initial_state)[0]
 ```
 
 ```python
@@ -279,7 +315,8 @@ h1d.eigenstates()
 
 <hr/>
 
-* Test a simple two qubit example to sanity check the algorithm.
+* Test a simple two qubit example to sanity check the procedure we're using.
+* Changing the Pauli coefficients can be useful when debugging.
 
 ```python
 h2d_coeffs = {"II": 1, "XX": 2, "YY": 3, "ZZ": 4}
@@ -313,8 +350,8 @@ h2d_ansatz(math.pi / 2, math.pi / 2, math.pi / 2, math.pi / 2)
 ```
 
 ```python
-initial_state = qutip.ket("00")
-initial_state
+h2d_initial_state = qutip.ket("00")
+h2d_initial_state
 ```
 
 ```python
@@ -326,7 +363,7 @@ def h2d_energy(x):
     ansatz_circuit = h2d_ansatz(theta1, theta2, theta3, theta4)
     energy = vqefs.vqe.estimate_energy(
         h2d_coeffs, h2d_measurement_circuits,
-        initial_state, ansatz_circuit,
+        h2d_initial_state, ansatz_circuit,
         shots=200, analytical=analytical
     )
     return energy
@@ -346,7 +383,7 @@ print(f"best theta: {result.x}")
 
 ```python
 # display final state
-h2d_ansatz(*result.x).run(initial_state)[0]
+h2d_ansatz(*result.x).run(h2d_initial_state)[0]
 ```
 
 ```python
